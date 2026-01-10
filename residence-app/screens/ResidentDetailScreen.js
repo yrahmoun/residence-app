@@ -21,7 +21,8 @@ export default function ResidentDetailScreen({ route, navigation }) {
     carPlate: ['', '', ''],
     section: '',
     building: '',
-    door: ''
+    door: '',
+    numeroDeMacaron: '' // new
   });
 
   useEffect(() => {
@@ -35,7 +36,6 @@ export default function ResidentDetailScreen({ route, navigation }) {
         const r = rows[0];
         setResident(r);
 
-        // Split car plate into parts
         const plateParts = r.carPlate.split('-');
         setForm({
           fullName: r.fullName,
@@ -44,7 +44,8 @@ export default function ResidentDetailScreen({ route, navigation }) {
           carPlate: plateParts.length === 3 ? plateParts : ['', '', ''],
           section: r.section,
           building: r.building,
-          door: r.door
+          door: r.door,
+          numeroDeMacaron: r.numeroDeMacaron || '' // populate
         });
       }
     };
@@ -73,12 +74,11 @@ export default function ResidentDetailScreen({ route, navigation }) {
   };
 
   const handleSave = async () => {
-    // Combine car plate parts
     const carPlateStr = form.carPlate.map(p => p.trim()).join('-');
 
     const db = await getDB();
     await db.runAsync(
-      `UPDATE residents SET fullName = ?, phonePrimary = ?, phoneSecondary = ?, carPlate = ?, section = ?, building = ?, door = ? WHERE id = ?`,
+      `UPDATE residents SET fullName = ?, phonePrimary = ?, phoneSecondary = ?, carPlate = ?, section = ?, building = ?, door = ?, numeroDeMacaron = ? WHERE id = ?`,
       [
         form.fullName.trim(),
         form.phonePrimary.trim(),
@@ -87,6 +87,7 @@ export default function ResidentDetailScreen({ route, navigation }) {
         form.section.trim(),
         form.building.trim(),
         form.door.trim(),
+        form.numeroDeMacaron.trim(), // new
         residentId
       ]
     );
@@ -155,6 +156,14 @@ export default function ResidentDetailScreen({ route, navigation }) {
         <Input
           value={form.door}
           onChangeText={v => setForm({ ...form, door: v })}
+          editable={editable}
+        />
+
+        {/* NUMÉRO DE MACARON */}
+        <Text style={styles.label}>Numéro de macaron</Text>
+        <Input
+          value={form.numeroDeMacaron}
+          onChangeText={v => setForm({ ...form, numeroDeMacaron: v })}
           editable={editable}
         />
 

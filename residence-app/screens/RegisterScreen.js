@@ -26,7 +26,8 @@ export default function RegisterScreen() {
     carPlateParts: ['', '', ''],
     section: '',
     building: '',
-    door: ''
+    door: '',
+    numeroDeMacaron: '' // added
   });
 
   const [message, setMessage] = useState(null);
@@ -41,8 +42,10 @@ export default function RegisterScreen() {
     const section = form.section.trim();
     const building = form.building.trim();
     const door = form.door.trim();
+    const numeroDeMacaron = form.numeroDeMacaron.trim(); // added
 
-    if (!fullName || !phonePrimary || !carPlate || !section || !building || !door) {
+    // make numeroDeMacaron required
+    if (!fullName || !phonePrimary || !carPlate || !section || !building || !door || !numeroDeMacaron) {
       setMessage({ text: 'Veuillez remplir tous les champs obligatoires', color: 'red' });
       return;
     }
@@ -50,8 +53,8 @@ export default function RegisterScreen() {
     try {
       await db.runAsync(
         `INSERT INTO residents
-          (fullName, phonePrimary, phoneSecondary, carPlate, section, building, door)
-          VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          (fullName, phonePrimary, phoneSecondary, carPlate, section, building, door, numeroDeMacaron)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           fullName,
           phonePrimary,
@@ -59,7 +62,8 @@ export default function RegisterScreen() {
           carPlate,
           section,
           building,
-          door
+          door,
+          numeroDeMacaron // added
         ]
       );
 
@@ -70,7 +74,8 @@ export default function RegisterScreen() {
         carPlateParts: ['', '', ''],
         section: '',
         building: '',
-        door: ''
+        door: '',
+        numeroDeMacaron: '' // reset
       });
 
       setMessage({ text: 'Enregistrement terminé', color: 'green' });
@@ -112,6 +117,12 @@ export default function RegisterScreen() {
 
           <Text style={styles.label}>Porte:</Text>
           <Input value={form.door} onChangeText={v => setForm({ ...form, door: v })} />
+
+          <Text style={styles.label}>Numéro de macaron:</Text>
+          <Input
+              value={form.numeroDeMacaron}
+              onChangeText={v => setForm({ ...form, numeroDeMacaron: v })}
+          />
 
           <Button title="Enregistrer" onPress={save} color={PRIMARY} />
 

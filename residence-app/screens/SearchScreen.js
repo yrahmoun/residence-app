@@ -26,6 +26,7 @@ export default function SearchScreen({ navigation }) {
   const [type, setType] = useState('fullName');
   const [value, setValue] = useState('');
   const [carPlateParts, setCarPlateParts] = useState(['', '', '']);
+  const [numeroDeMacaron, setNumeroDeMacaron] = useState('');
   const [results, setResults] = useState([]);
   const [noResult, setNoResult] = useState(false);
 
@@ -37,17 +38,16 @@ export default function SearchScreen({ navigation }) {
     if (type === 'fullName') {
       query = `SELECT * FROM residents WHERE fullName LIKE ?`;
       params = [`%${value.trim().toLowerCase()}%`];
-    }
-
-    if (type === 'phonePrimary') {
+    } else if (type === 'phonePrimary') {
       query = `SELECT * FROM residents WHERE phonePrimary LIKE ?`;
       params = [`%${value.trim()}%`];
-    }
-
-    if (type === 'carPlate') {
+    } else if (type === 'carPlate') {
       const plate = carPlateParts.map(p => p.trim()).join('-').toLowerCase();
       query = `SELECT * FROM residents WHERE carPlate LIKE ?`;
       params = [`%${plate}%`];
+    } else if (type === 'numeroDeMacaron') {
+      query = `SELECT * FROM residents WHERE numeroDeMacaron = ?`;
+      params = [numeroDeMacaron.trim()];
     }
 
     const rows = await db.getAllAsync(query, params);
@@ -60,14 +60,20 @@ export default function SearchScreen({ navigation }) {
       <Text style={styles.title}>Recherche</Text>
 
       <View style={styles.card}>
-        <Picker selectedValue={type} onValueChange={setType}>
+        <Picker
+          selectedValue={['fullName', 'phonePrimary', 'carPlate', 'numeroDeMacaron'].includes(type) ? type : 'fullName'}
+          onValueChange={setType}
+        >
           <Picker.Item label="Nom complet" value="fullName" />
           <Picker.Item label="Téléphone" value="phonePrimary" />
           <Picker.Item label="Matricule" value="carPlate" />
+          <Picker.Item label="Numéro de macaron" value="numeroDeMacaron" />
         </Picker>
 
         {type === 'carPlate' ? (
           <CarPlateInput value={carPlateParts} onChange={setCarPlateParts} />
+        ) : type === 'numeroDeMacaron' ? (
+          <Input value={numeroDeMacaron} onChangeText={setNumeroDeMacaron} />
         ) : (
           <Input value={value} onChangeText={setValue} />
         )}
@@ -95,6 +101,9 @@ export default function SearchScreen({ navigation }) {
                   </View>
                 ))}
               </View>
+
+              {/* Numéro de macaron */}
+              <Text style={styles.text}>Numéro de macaron 🎟️: {r.numeroDeMacaron}</Text>
 
               <Text style={styles.text}>Adresse 📍: {r.section} / {r.building} / {r.door}</Text>
             </View>
@@ -140,8 +149,6 @@ const styles = StyleSheet.create({
     color: TEXT_MUTED,
     marginBottom: 6
   },
-
-  /* === CAR PLATE DISPLAY === */
   plateContainer: {
     flexDirection: 'row',
     marginVertical: 6,
@@ -163,6 +170,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: TEXT_DARK,
     textAlign: 'center',
-    writingDirection: 'ltr' // keeps Arabic/Latin centered correctly
+    writingDirection: 'ltr'
   }
 });

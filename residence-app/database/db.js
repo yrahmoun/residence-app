@@ -14,7 +14,8 @@ export async function initDB() {
       carPlate TEXT NOT NULL,
       section TEXT NOT NULL,
       building TEXT NOT NULL,
-      door TEXT NOT NULL
+      door TEXT NOT NULL,
+      numeroDeMacaron TEXT NOT NULL
     );
   `);
 }
