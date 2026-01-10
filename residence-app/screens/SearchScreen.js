@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useState } from 'react';
 import Input from '../components/Input';
@@ -11,14 +11,23 @@ const CARD_COLOR = '#ffffff';
 const PRIMARY = '#2563eb';
 const TEXT_DARK = '#0f172a';
 const TEXT_MUTED = '#475569';
-const ERROR_RED = '#dc2626';
 
-export default function SearchScreen() {
+// Split car plate string into 3 parts for display
+const splitPlateForDisplay = (plate) => {
+  const parts = plate.split('-');
+  return [
+    parts[0] || '',
+    parts[1] || '',
+    parts[2] || ''
+  ];
+};
+
+export default function SearchScreen({ navigation }) {
   const [type, setType] = useState('fullName');
   const [value, setValue] = useState('');
   const [carPlateParts, setCarPlateParts] = useState(['', '', '']);
   const [results, setResults] = useState([]);
-  const [searched, setSearched] = useState(false);
+  const [noResult, setNoResult] = useState(false);
 
   const search = async () => {
     const db = await getDB();
@@ -43,28 +52,11 @@ export default function SearchScreen() {
 
     const rows = await db.getAllAsync(query, params);
     setResults(rows);
-    setSearched(true);
-  };
-
-  const renderPlate = (plate) => {
-    const parts = plate.split('-');
-
-    return (
-      <View style={styles.plateRow}>
-        {parts.map((p, i) => (
-          <View key={i} style={styles.plateBox}>
-            <Text style={styles.plateText}>{p}</Text>
-          </View>
-        ))}
-      </View>
-    );
+    setNoResult(rows.length === 0);
   };
 
   return (
-    <ScrollView
-      style={{ backgroundColor: BG_COLOR }}
-      contentContainerStyle={styles.container}
-    >
+    <ScrollView style={{ backgroundColor: BG_COLOR }} contentContainerStyle={styles.container}>
       <Text style={styles.title}>Recherche</Text>
 
       <View style={styles.card}>
@@ -83,25 +75,32 @@ export default function SearchScreen() {
         <Button title="Rechercher" onPress={search} color={PRIMARY} />
       </View>
 
-      {searched && results.length === 0 && (
-        <Text style={styles.noResult}>
-          Aucun résultat trouvé
-        </Text>
-      )}
+      {noResult && <Text style={{ color: 'red', textAlign: 'center', marginBottom: 15 }}>Aucun résultat trouvé</Text>}
 
-      {results.map((r, i) => (
-        <View key={i} style={styles.resultCard}>
-          <Text style={styles.name}>{r.fullName}</Text>
-          <Text style={styles.text}>Téléphone 1 📞: {r.phonePrimary}</Text>
-          <Text style={styles.text}>Téléphone 2 📞: {r.phoneSecondary}</Text>
-          <Text style={styles.text}>Matricule 🚗:</Text>
-          {renderPlate(r.carPlate)}
+      {results.map((r, i) => {
+        const plateParts = splitPlateForDisplay(r.carPlate);
 
-          <Text style={styles.text}>
-            Adresse 📍: {r.section} / {r.building} / {r.door}
-          </Text>
-        </View>
-      ))}
+        return (
+          <TouchableOpacity key={i} onPress={() => navigation.navigate('ResidentDetail', { residentId: r.id })}>
+            <View style={styles.resultCard}>
+              <Text style={styles.name}>{r.fullName}</Text>
+              <Text style={styles.text}>Téléphone 📞: {r.phonePrimary}</Text>
+
+              {/* Car plate label */}
+              <Text style={styles.text}>Matricule 🚗:</Text>
+              <View style={styles.plateContainer}>
+                {plateParts.map((p, idx) => (
+                  <View key={idx} style={styles.plateBox}>
+                    <Text style={styles.plateText}>{p}</Text>
+                  </View>
+                ))}
+              </View>
+
+              <Text style={styles.text}>Adresse 📍: {r.section} / {r.building} / {r.door}</Text>
+            </View>
+          </TouchableOpacity>
+        );
+      })}
     </ScrollView>
   );
 }
@@ -139,35 +138,31 @@ const styles = StyleSheet.create({
   },
   text: {
     color: TEXT_MUTED,
-    marginBottom: 4
-  },
-  noResult: {
-    color: ERROR_RED,
-    textAlign: 'center',
-    marginTop: 10,
-    fontWeight: '600'
+    marginBottom: 6
   },
 
   /* === CAR PLATE DISPLAY === */
-  plateRow: {
+  plateContainer: {
     flexDirection: 'row',
-    gap: 8,
-    marginVertical: 6
+    marginVertical: 6,
+    justifyContent: 'flex-start'
   },
   plateBox: {
-    minWidth: 44,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
+    flex: 1,
     backgroundColor: '#ffffff',
+    marginHorizontal: 3,
+    paddingVertical: 8,
     borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#ccc',
     alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 2
+    justifyContent: 'center'
   },
   plateText: {
-    fontSize: 16,
     fontWeight: 'bold',
+    fontSize: 16,
     color: TEXT_DARK,
-    textAlign: 'center'
+    textAlign: 'center',
+    writingDirection: 'ltr' // keeps Arabic/Latin centered correctly
   }
 });

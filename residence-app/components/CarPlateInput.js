@@ -1,54 +1,62 @@
-import { View, TextInput, StyleSheet, Text } from 'react-native';
+import { View, TextInput, StyleSheet } from 'react-native';
 
-export default function CarPlateInput({ value = ['', '', ''], onChange }) {
-  const updatePart = (index, text) => {
-    const newVal = [...value];
-    newVal[index] = text;
-    onChange(newVal);
+const TEXT_DARK = '#0f172a';
+
+export default function CarPlateInput({ value, onChange }) {
+  const updatePart = (text, index) => {
+    const updated = [...value];
+    updated[index] = text;
+    onChange(updated);
   };
 
   return (
-    <View style={styles.container}>
-      {['Part 1', 'Lettre', 'Part 2'].map((label, i) => (
-        <View key={i} style={styles.inputGroup}>
-          <Text style={styles.label}>{label}</Text>
-          <TextInput
-            style={styles.input}
-            value={value[i]}
-            onChangeText={t => updatePart(i, t)}
-            placeholder={label}
-            placeholderTextColor="#aaa"
-            autoCapitalize="characters"
-            textAlign="center"
-          />
-        </View>
-      ))}
+    <View style={styles.row}>
+      <TextInput
+        style={styles.box}
+        value={value[0]}
+        onChangeText={(t) => updatePart(t, 0)}
+        placeholder="1234"
+        keyboardType="default"
+        maxLength={6}
+      />
+
+      <TextInput
+        style={styles.box}
+        value={value[1]}
+        onChangeText={(t) => updatePart(t, 1)}
+        placeholder="A"
+        keyboardType="default"
+        maxLength={2}
+      />
+
+      <TextInput
+        style={styles.box}
+        value={value[2]}
+        onChangeText={(t) => updatePart(t, 2)}
+        placeholder="56"
+        keyboardType="default"
+        maxLength={3}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 15,
+    gap: 8,
+    marginVertical: 10
   },
-  inputGroup: {
+  box: {
     flex: 1,
-    marginHorizontal: 4,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
-  },
-  input: {
-    backgroundColor: '#FFFFFF',
-    padding: 10,
-    borderRadius: 8,
+    backgroundColor: '#ffffff',
     borderWidth: 1,
-    borderColor: '#CCC',
+    borderColor: '#ccc',
+    borderRadius: 6,
+    paddingVertical: 10,
+    textAlign: 'center',
     fontSize: 16,
-  },
+    fontWeight: 'bold',
+    color: TEXT_DARK
+  }
 });

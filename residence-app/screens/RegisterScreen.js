@@ -95,22 +95,22 @@ export default function RegisterScreen() {
           <Text style={styles.label}>Téléphone principal:</Text>
           <Input value={form.phonePrimary} onChangeText={v => setForm({ ...form, phonePrimary: v })} />
 
-          <Text style={styles.label}>Téléphone secondaire;</Text>
+          <Text style={styles.label}>Téléphone secondaire:</Text>
           <Input value={form.phoneSecondary} onChangeText={v => setForm({ ...form, phoneSecondary: v })} />
 
-          <Text style={styles.label}>Matricule;</Text>
+          <Text style={styles.label}>Matricule:</Text>
           <CarPlateInput
             value={form.carPlateParts}
             onChange={v => setForm({ ...form, carPlateParts: v })}
           />
 
-          <Text style={styles.label}>Section;</Text>
+          <Text style={styles.label}>Section:</Text>
           <Input value={form.section} onChangeText={v => setForm({ ...form, section: v })} />
 
-          <Text style={styles.label}>Bâtiment;</Text>
+          <Text style={styles.label}>Bâtiment:</Text>
           <Input value={form.building} onChangeText={v => setForm({ ...form, building: v })} />
 
-          <Text style={styles.label}>Porte;</Text>
+          <Text style={styles.label}>Porte:</Text>
           <Input value={form.door} onChangeText={v => setForm({ ...form, door: v })} />
 
           <Button title="Enregistrer" onPress={save} color={PRIMARY} />
