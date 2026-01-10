@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "residence-app",
-    "slug": "residence-app",
+    "name": "Diar Al Ahlam",
+    "slug": "diar-al-ahlam",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/main.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
@@ -20,13 +20,19 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.yrahmoun.diaralahlam"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-sqlite"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "84c80237-ec6f-4406-b3fa-94fde775713e"
+      }
+    }
   }
 }
