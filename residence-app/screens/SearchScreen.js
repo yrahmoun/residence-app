@@ -1,10 +1,11 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useState } from 'react';
 import Input from '../components/Input';
 import Button from '../components/Button';
 import CarPlateInput from '../components/CarPlateInput';
 import { getDB } from '../database/db';
+import { syncResidents, fetchResidents } from '../api';
 
 const BG_COLOR = '#f5f7fa';
 const CARD_COLOR = '#ffffff';
@@ -15,11 +16,7 @@ const TEXT_MUTED = '#475569';
 // Split car plate string into 3 parts for display
 const splitPlateForDisplay = (plate) => {
   const parts = plate.split('-');
-  return [
-    parts[0] || '',
-    parts[1] || '',
-    parts[2] || ''
-  ];
+  return [parts[0] || '', parts[1] || '', parts[2] || ''];
 };
 
 export default function SearchScreen({ navigation }) {
@@ -29,6 +26,7 @@ export default function SearchScreen({ navigation }) {
   const [numeroDeMacaron, setNumeroDeMacaron] = useState('');
   const [results, setResults] = useState([]);
   const [noResult, setNoResult] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
   const search = async () => {
     const db = await getDB();
@@ -55,6 +53,57 @@ export default function SearchScreen({ navigation }) {
     setNoResult(rows.length === 0);
   };
 
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      const db = await getDB();
+
+      // 1️⃣ Push local residents to backend
+      const localResidents = await db.getAllAsync(`SELECT * FROM residents`);
+      try {
+        await syncResidents(localResidents);
+      } catch (err) {
+        console.warn('Push to backend failed:', err.message);
+      }
+
+      // 2️⃣ Pull backend residents to local DB
+      const backendResidents = await fetchResidents();
+
+      for (const resident of backendResidents) {
+        // Check if already exists locally
+        const rows = await db.getAllAsync(
+          `SELECT id FROM residents WHERE carPlate = ? OR numeroDeMacaron = ?`,
+          [resident.carPlate, resident.numeroDeMacaron]
+        );
+
+        if (rows.length === 0) {
+          await db.runAsync(
+            `INSERT INTO residents
+              (fullName, phonePrimary, phoneSecondary, carPlate, section, building, door, numeroDeMacaron)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              resident.fullName,
+              resident.phonePrimary,
+              resident.phoneSecondary || '',
+              resident.carPlate,
+              resident.section,
+              resident.building,
+              resident.door,
+              resident.numeroDeMacaron
+            ]
+          );
+        }
+      }
+
+      Alert.alert('Synchronisation', '✅ Synchronisation réussie !');
+    } catch (err) {
+      console.error('Sync failed:', err.message);
+      Alert.alert('Erreur', '❌ Échec de la synchronisation, réessayez plus tard');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   return (
     <ScrollView style={{ backgroundColor: BG_COLOR }} contentContainerStyle={styles.container}>
       <Text style={styles.title}>Recherche</Text>
@@ -79,6 +128,9 @@ export default function SearchScreen({ navigation }) {
         )}
 
         <Button title="Rechercher" onPress={search} color={PRIMARY} />
+        <View style={{ marginTop: 10 }}>
+          <Button title={syncing ? "Synchronisation..." : "Synchroniser"} onPress={handleSync} color={PRIMARY} />
+        </View>
       </View>
 
       {noResult && <Text style={{ color: 'red', textAlign: 'center', marginBottom: 15 }}>Aucun résultat trouvé</Text>}
@@ -92,7 +144,6 @@ export default function SearchScreen({ navigation }) {
               <Text style={styles.name}>{r.fullName}</Text>
               <Text style={styles.text}>Téléphone 📞: {r.phonePrimary}</Text>
 
-              {/* Car plate label */}
               <Text style={styles.text}>Matricule 🚗:</Text>
               <View style={styles.plateContainer}>
                 {plateParts.map((p, idx) => (
@@ -102,9 +153,7 @@ export default function SearchScreen({ navigation }) {
                 ))}
               </View>
 
-              {/* Numéro de macaron */}
               <Text style={styles.text}>Numéro de macaron 🎟️: {r.numeroDeMacaron}</Text>
-
               <Text style={styles.text}>Adresse 📍: {r.section} / {r.building} / {r.door}</Text>
             </View>
           </TouchableOpacity>
@@ -115,61 +164,13 @@ export default function SearchScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-    paddingTop: 60
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: TEXT_DARK,
-    textAlign: 'center',
-    marginBottom: 25
-  },
-  card: {
-    backgroundColor: CARD_COLOR,
-    borderRadius: 14,
-    padding: 20,
-    marginBottom: 20,
-    elevation: 3
-  },
-  resultCard: {
-    backgroundColor: '#eef2ff',
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 12
-  },
-  name: {
-    fontWeight: 'bold',
-    fontSize: 16,
-    color: TEXT_DARK,
-    marginBottom: 4
-  },
-  text: {
-    color: TEXT_MUTED,
-    marginBottom: 6
-  },
-  plateContainer: {
-    flexDirection: 'row',
-    marginVertical: 6,
-    justifyContent: 'flex-start'
-  },
-  plateBox: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-    marginHorizontal: 3,
-    paddingVertical: 8,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  plateText: {
-    fontWeight: 'bold',
-    fontSize: 16,
-    color: TEXT_DARK,
-    textAlign: 'center',
-    writingDirection: 'ltr'
-  }
+  container: { padding: 20, paddingTop: 60 },
+  title: { fontSize: 28, fontWeight: 'bold', color: TEXT_DARK, textAlign: 'center', marginBottom: 25 },
+  card: { backgroundColor: CARD_COLOR, borderRadius: 14, padding: 20, marginBottom: 20, elevation: 3 },
+  resultCard: { backgroundColor: '#eef2ff', borderRadius: 12, padding: 15, marginBottom: 12 },
+  name: { fontWeight: 'bold', fontSize: 16, color: TEXT_DARK, marginBottom: 4 },
+  text: { color: TEXT_MUTED, marginBottom: 6 },
+  plateContainer: { flexDirection: 'row', marginVertical: 6, justifyContent: 'flex-start' },
+  plateBox: { flex: 1, backgroundColor: '#ffffff', marginHorizontal: 3, paddingVertical: 8, borderRadius: 6, borderWidth: 1, borderColor: '#ccc', alignItems: 'center', justifyContent: 'center' },
+  plateText: { fontWeight: 'bold', fontSize: 16, color: TEXT_DARK, textAlign: 'center', writingDirection: 'ltr' }
 });
