@@ -75,8 +75,9 @@ export default function ResidentDetailScreen({ route, navigation }) {
   };
 
   const handleSave = async () => {
-    const carPlateStr = form.carPlate.map(p => p.trim()).join('-');
+  const carPlateStr = form.carPlate.map(p => p.trim()).join('-');
 
+  try {
     const db = await getDB();
     await db.runAsync(
       `UPDATE residents 
@@ -96,10 +97,15 @@ export default function ResidentDetailScreen({ route, navigation }) {
       ]
     );
 
-    Alert.alert('Succès', 'Le résident a été mis à jour');
-    setEditable(false);
-    setResident({ ...form, carPlate: carPlateStr });
+      Alert.alert('Succès', 'Le résident a été mis à jour');
+      setEditable(false);
+      setResident({ ...form, carPlate: carPlateStr });
+    } catch (err) {
+      console.error(err);
+      Alert.alert('Erreur', "Impossible de mettre à jour le résident. Vérifiez que la plaque ou le numéro de macaron n'existe pas déjà.");
+    }
   };
+
 
   if (!resident) {
     return (
