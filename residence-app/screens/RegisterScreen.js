@@ -2,11 +2,10 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
-  KeyboardAvoidingView,
   Platform
 } from 'react-native';
 import { useState } from 'react';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import Input from '../components/Input';
 import Button from '../components/Button';
 import CarPlateInput from '../components/CarPlateInput';
@@ -27,7 +26,7 @@ export default function RegisterScreen() {
     section: '',
     building: '',
     door: '',
-    numeroDeMacaron: '' // added
+    numeroDeMacaron: ''
   });
 
   const [message, setMessage] = useState(null);
@@ -42,9 +41,8 @@ export default function RegisterScreen() {
     const section = form.section.trim();
     const building = form.building.trim();
     const door = form.door.trim();
-    const numeroDeMacaron = form.numeroDeMacaron.trim(); // added
+    const numeroDeMacaron = form.numeroDeMacaron.trim();
 
-    // make numeroDeMacaron required
     if (!fullName || !phonePrimary || !carPlate || !section || !building || !door || !numeroDeMacaron) {
       setMessage({ text: 'Veuillez remplir tous les champs obligatoires', color: 'red' });
       return;
@@ -63,7 +61,7 @@ export default function RegisterScreen() {
           section,
           building,
           door,
-          numeroDeMacaron // added
+          numeroDeMacaron
         ]
       );
 
@@ -75,7 +73,7 @@ export default function RegisterScreen() {
         section: '',
         building: '',
         door: '',
-        numeroDeMacaron: '' // reset
+        numeroDeMacaron: ''
       });
 
       setMessage({ text: 'Enregistrement terminé', color: 'green' });
@@ -86,54 +84,55 @@ export default function RegisterScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: BG_COLOR }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <KeyboardAwareScrollView
+      style={{ backgroundColor: BG_COLOR }}
+      contentContainerStyle={styles.container}
+      enableOnAndroid={true}
+      extraScrollHeight={Platform.OS === 'android' ? 100 : 0}
+      keyboardShouldPersistTaps="handled"
     >
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>Enregistrement</Text>
+      <Text style={styles.title}>Enregistrement</Text>
 
-        <View style={styles.card}>
-          <Text style={styles.label}>Nom complet:</Text>
-          <Input value={form.fullName} onChangeText={v => setForm({ ...form, fullName: v })} />
+      <View style={styles.card}>
+        <Text style={styles.label}>Nom complet:</Text>
+        <Input value={form.fullName} onChangeText={v => setForm({ ...form, fullName: v })} />
 
-          <Text style={styles.label}>Téléphone principal:</Text>
-          <Input value={form.phonePrimary} onChangeText={v => setForm({ ...form, phonePrimary: v })} />
+        <Text style={styles.label}>Téléphone principal:</Text>
+        <Input value={form.phonePrimary} onChangeText={v => setForm({ ...form, phonePrimary: v })} />
 
-          <Text style={styles.label}>Téléphone secondaire:</Text>
-          <Input value={form.phoneSecondary} onChangeText={v => setForm({ ...form, phoneSecondary: v })} />
+        <Text style={styles.label}>Téléphone secondaire:</Text>
+        <Input value={form.phoneSecondary} onChangeText={v => setForm({ ...form, phoneSecondary: v })} />
 
-          <Text style={styles.label}>Matricule:</Text>
-          <CarPlateInput
-            value={form.carPlateParts}
-            onChange={v => setForm({ ...form, carPlateParts: v })}
-          />
+        <Text style={styles.label}>Matricule:</Text>
+        <CarPlateInput
+          value={form.carPlateParts}
+          onChange={v => setForm({ ...form, carPlateParts: v })}
+        />
 
-          <Text style={styles.label}>Section:</Text>
-          <Input value={form.section} onChangeText={v => setForm({ ...form, section: v })} />
+        <Text style={styles.label}>Section:</Text>
+        <Input value={form.section} onChangeText={v => setForm({ ...form, section: v })} />
 
-          <Text style={styles.label}>Bâtiment:</Text>
-          <Input value={form.building} onChangeText={v => setForm({ ...form, building: v })} />
+        <Text style={styles.label}>Bâtiment:</Text>
+        <Input value={form.building} onChangeText={v => setForm({ ...form, building: v })} />
 
-          <Text style={styles.label}>Porte:</Text>
-          <Input value={form.door} onChangeText={v => setForm({ ...form, door: v })} />
+        <Text style={styles.label}>Porte:</Text>
+        <Input value={form.door} onChangeText={v => setForm({ ...form, door: v })} />
 
-          <Text style={styles.label}>Numéro de macaron:</Text>
-          <Input
-              value={form.numeroDeMacaron}
-              onChangeText={v => setForm({ ...form, numeroDeMacaron: v })}
-          />
+        <Text style={styles.label}>Numéro de macaron:</Text>
+        <Input
+          value={form.numeroDeMacaron}
+          onChangeText={v => setForm({ ...form, numeroDeMacaron: v })}
+        />
 
-          <Button title="Enregistrer" onPress={save} color={PRIMARY} />
+        <Button title="Enregistrer" onPress={save} color={PRIMARY} />
 
-          {message && (
-            <Text style={[styles.message, { color: message.color }]}>
-              {message.text}
-            </Text>
-          )}
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        {message && (
+          <Text style={[styles.message, { color: message.color }]}>
+            {message.text}
+          </Text>
+        )}
+      </View>
+    </KeyboardAwareScrollView>
   );
 }
 

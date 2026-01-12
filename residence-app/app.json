@@ -21,7 +21,8 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.yrahmoun.diaralahlam"
+      "package": "com.yrahmoun.diaralahlam",
+      "windowSoftInputMode": "adjustResize"
     },
     "web": {
       "favicon": "./assets/favicon.png"

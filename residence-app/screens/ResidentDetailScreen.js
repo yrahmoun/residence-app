@@ -1,5 +1,6 @@
-import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, Alert } from 'react-native';
 import { useState, useEffect } from 'react';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import Input from '../components/Input';
 import Button from '../components/Button';
 import CarPlateInput from '../components/CarPlateInput';
@@ -22,7 +23,7 @@ export default function ResidentDetailScreen({ route, navigation }) {
     section: '',
     building: '',
     door: '',
-    numeroDeMacaron: '' // new
+    numeroDeMacaron: ''
   });
 
   useEffect(() => {
@@ -45,7 +46,7 @@ export default function ResidentDetailScreen({ route, navigation }) {
           section: r.section,
           building: r.building,
           door: r.door,
-          numeroDeMacaron: r.numeroDeMacaron || '' // populate
+          numeroDeMacaron: r.numeroDeMacaron || ''
         });
       }
     };
@@ -56,13 +57,13 @@ export default function ResidentDetailScreen({ route, navigation }) {
 
   const handleDelete = () => {
     Alert.alert(
-      "Supprimer",
-      "Voulez-vous vraiment supprimer ce résident ?",
+      'Supprimer',
+      'Voulez-vous vraiment supprimer ce résident ?',
       [
-        { text: "Annuler", style: "cancel" },
+        { text: 'Annuler', style: 'cancel' },
         {
-          text: "Supprimer",
-          style: "destructive",
+          text: 'Supprimer',
+          style: 'destructive',
           onPress: async () => {
             const db = await getDB();
             await db.runAsync(`DELETE FROM residents WHERE id = ?`, [residentId]);
@@ -78,7 +79,10 @@ export default function ResidentDetailScreen({ route, navigation }) {
 
     const db = await getDB();
     await db.runAsync(
-      `UPDATE residents SET fullName = ?, phonePrimary = ?, phoneSecondary = ?, carPlate = ?, section = ?, building = ?, door = ?, numeroDeMacaron = ? WHERE id = ?`,
+      `UPDATE residents 
+       SET fullName = ?, phonePrimary = ?, phoneSecondary = ?, carPlate = ?, 
+           section = ?, building = ?, door = ?, numeroDeMacaron = ? 
+       WHERE id = ?`,
       [
         form.fullName.trim(),
         form.phonePrimary.trim(),
@@ -87,12 +91,12 @@ export default function ResidentDetailScreen({ route, navigation }) {
         form.section.trim(),
         form.building.trim(),
         form.door.trim(),
-        form.numeroDeMacaron.trim(), // new
+        form.numeroDeMacaron.trim(),
         residentId
       ]
     );
 
-    Alert.alert("Succès", "Le résident a été mis à jour");
+    Alert.alert('Succès', 'Le résident a été mis à jour');
     setEditable(false);
     setResident({ ...form, carPlate: carPlateStr });
   };
@@ -106,60 +110,37 @@ export default function ResidentDetailScreen({ route, navigation }) {
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: BG_COLOR }]} contentContainerStyle={{ paddingBottom: 40 }}>
+    <KeyboardAwareScrollView
+      style={{ backgroundColor: BG_COLOR }}
+      contentContainerStyle={{ paddingBottom: 40 }}
+      enableOnAndroid
+      extraScrollHeight={100}
+      keyboardShouldPersistTaps="handled"
+    >
       <Text style={styles.title}>Détails du résident</Text>
 
       <View style={styles.card}>
         <Text style={styles.label}>Nom complet</Text>
-        <Input
-          value={form.fullName}
-          onChangeText={v => setForm({ ...form, fullName: v })}
-          editable={editable}
-        />
+        <Input value={form.fullName} onChangeText={v => setForm({ ...form, fullName: v })} editable={editable} />
 
         <Text style={styles.label}>Téléphone principal</Text>
-        <Input
-          value={form.phonePrimary}
-          onChangeText={v => setForm({ ...form, phonePrimary: v })}
-          editable={editable}
-        />
+        <Input value={form.phonePrimary} onChangeText={v => setForm({ ...form, phonePrimary: v })} editable={editable} />
 
         <Text style={styles.label}>Téléphone secondaire</Text>
-        <Input
-          value={form.phoneSecondary}
-          onChangeText={v => setForm({ ...form, phoneSecondary: v })}
-          editable={editable}
-        />
+        <Input value={form.phoneSecondary} onChangeText={v => setForm({ ...form, phoneSecondary: v })} editable={editable} />
 
         <Text style={styles.label}>Matricule</Text>
-        <CarPlateInput
-          value={form.carPlate}
-          onChange={v => setForm({ ...form, carPlate: v })}
-          editable={editable}
-        />
+        <CarPlateInput value={form.carPlate} onChange={v => setForm({ ...form, carPlate: v })} editable={editable} />
 
         <Text style={styles.label}>Section</Text>
-        <Input
-          value={form.section}
-          onChangeText={v => setForm({ ...form, section: v })}
-          editable={editable}
-        />
+        <Input value={form.section} onChangeText={v => setForm({ ...form, section: v })} editable={editable} />
 
         <Text style={styles.label}>Bâtiment</Text>
-        <Input
-          value={form.building}
-          onChangeText={v => setForm({ ...form, building: v })}
-          editable={editable}
-        />
+        <Input value={form.building} onChangeText={v => setForm({ ...form, building: v })} editable={editable} />
 
         <Text style={styles.label}>Porte</Text>
-        <Input
-          value={form.door}
-          onChangeText={v => setForm({ ...form, door: v })}
-          editable={editable}
-        />
+        <Input value={form.door} onChangeText={v => setForm({ ...form, door: v })} editable={editable} />
 
-        {/* NUMÉRO DE MACARON */}
         <Text style={styles.label}>Numéro de macaron</Text>
         <Input
           value={form.numeroDeMacaron}
@@ -180,7 +161,7 @@ export default function ResidentDetailScreen({ route, navigation }) {
           <Button title="Enregistrer" onPress={handleSave} color={PRIMARY} style={{ marginTop: 20 }} />
         )}
       </View>
-    </ScrollView>
+    </KeyboardAwareScrollView>
   );
 }
 

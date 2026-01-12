@@ -1,7 +1,7 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import BottomTabs from './navigation/BottomTabs';
 import ResidentDetailScreen from './screens/ResidentDetailScreen';
 import { initDB } from './database/db';
