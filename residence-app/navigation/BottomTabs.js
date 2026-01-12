@@ -15,9 +15,8 @@ export default function BottomTabs() {
           borderTopWidth: 0,
           elevation: 0,
           height: 95,
-          paddingBottom: 20, // enough space above system nav
-          paddingTop: 8,
         },
+        tabBarSafeAreaInsets: { bottom: 'always' },
         tabBarActiveTintColor: '#6200EE',
         tabBarInactiveTintColor: '#9E9E9E',
         tabBarLabelStyle: {
@@ -34,7 +33,6 @@ export default function BottomTabs() {
           }
           return <Ionicons name={iconName} size={22} color={color} />;
         },
-        // ⬇️ fix white space on keyboard open (Android)
         keyboardHidesTabBar: true,
       })}
     >

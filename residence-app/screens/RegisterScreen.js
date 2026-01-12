@@ -10,6 +10,7 @@ import Input from '../components/Input';
 import Button from '../components/Button';
 import CarPlateInput from '../components/CarPlateInput';
 import { getDB } from '../database/db';
+import { syncResidents } from '../api';
 
 const BG_COLOR = '#f5f7fa';
 const CARD_COLOR = '#ffffff';
@@ -30,6 +31,7 @@ export default function RegisterScreen() {
   });
 
   const [message, setMessage] = useState(null);
+  const [syncError, setSyncError] = useState(null); // Sync error
 
   const save = async () => {
     const db = await getDB();
@@ -49,22 +51,15 @@ export default function RegisterScreen() {
     }
 
     try {
+      // 1️⃣ Save locally
       await db.runAsync(
         `INSERT INTO residents
           (fullName, phonePrimary, phoneSecondary, carPlate, section, building, door, numeroDeMacaron)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          fullName,
-          phonePrimary,
-          phoneSecondary,
-          carPlate,
-          section,
-          building,
-          door,
-          numeroDeMacaron
-        ]
+        [fullName, phonePrimary, phoneSecondary, carPlate, section, building, door, numeroDeMacaron]
       );
 
+      // Reset form
       setForm({
         fullName: '',
         phonePrimary: '',
@@ -76,10 +71,30 @@ export default function RegisterScreen() {
         numeroDeMacaron: ''
       });
 
+      // Show local registration success
       setMessage({ text: 'Enregistrement terminé', color: 'green' });
-    } catch (e) {
-      console.error(e);
-      setMessage({ text: "Erreur lors de l'enregistrement", color: 'red' });
+      setSyncError(null);
+
+      // 2️⃣ Try syncing only if registration succeeded
+      try {
+        await syncResidents([{
+          fullName,
+          phonePrimary,
+          phoneSecondary,
+          carPlate,
+          section,
+          building,
+          door,
+          numeroDeMacaron
+        }]);
+      } catch {
+        setSyncError('Échec de la synchronisation, réessayez plus tard');
+      }
+
+    } catch (err) {
+      console.error(err);
+      setMessage({ text: 'Erreur lors de l’enregistrement local', color: 'red' });
+      setSyncError(null); // clear sync error if registration failed
     }
   };
 
@@ -104,10 +119,7 @@ export default function RegisterScreen() {
         <Input value={form.phoneSecondary} onChangeText={v => setForm({ ...form, phoneSecondary: v })} />
 
         <Text style={styles.label}>Matricule:</Text>
-        <CarPlateInput
-          value={form.carPlateParts}
-          onChange={v => setForm({ ...form, carPlateParts: v })}
-        />
+        <CarPlateInput value={form.carPlateParts} onChange={v => setForm({ ...form, carPlateParts: v })} />
 
         <Text style={styles.label}>Section:</Text>
         <Input value={form.section} onChangeText={v => setForm({ ...form, section: v })} />
@@ -119,53 +131,21 @@ export default function RegisterScreen() {
         <Input value={form.door} onChangeText={v => setForm({ ...form, door: v })} />
 
         <Text style={styles.label}>Numéro de macaron:</Text>
-        <Input
-          value={form.numeroDeMacaron}
-          onChangeText={v => setForm({ ...form, numeroDeMacaron: v })}
-        />
+        <Input value={form.numeroDeMacaron} onChangeText={v => setForm({ ...form, numeroDeMacaron: v })} />
 
         <Button title="Enregistrer" onPress={save} color={PRIMARY} />
 
-        {message && (
-          <Text style={[styles.message, { color: message.color }]}>
-            {message.text}
-          </Text>
-        )}
+        {message && <Text style={[styles.message, { color: message.color }]}>{message.text}</Text>}
+        {syncError && <Text style={[styles.message, { color: 'red' }]}>{syncError}</Text>}
       </View>
     </KeyboardAwareScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-    paddingTop: 60
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: TEXT_DARK,
-    textAlign: 'center',
-    marginBottom: 25
-  },
-  card: {
-    backgroundColor: CARD_COLOR,
-    borderRadius: 14,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    elevation: 3
-  },
-  label: {
-    fontSize: 14,
-    color: TEXT_MUTED,
-    marginBottom: 6,
-    marginTop: 12
-  },
-  message: {
-    marginTop: 15,
-    textAlign: 'center',
-    fontWeight: 'bold'
-  }
+  container: { padding: 20, paddingTop: 60 },
+  title: { fontSize: 28, fontWeight: 'bold', color: TEXT_DARK, textAlign: 'center', marginBottom: 25 },
+  card: { backgroundColor: CARD_COLOR, borderRadius: 14, padding: 20, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 10, elevation: 3 },
+  label: { fontSize: 14, color: TEXT_MUTED, marginBottom: 6, marginTop: 12 },
+  message: { marginTop: 15, textAlign: 'center', fontWeight: 'bold' }
 });
