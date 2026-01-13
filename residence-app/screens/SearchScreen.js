@@ -55,15 +55,23 @@ export default function SearchScreen({ navigation }) {
 
   const handleSync = async () => {
     setSyncing(true);
+
+    let pushOk = false;
+    let pullOk = false;
+
     try {
       const db = await getDB();
 
-      // 1️⃣ Push local residents to backend
+      // 1️⃣ Push local residents + pending deletes to backend
       const localResidents = await db.getAllAsync(`SELECT * FROM residents`);
-      try {
-        await syncResidents(localResidents);
-      } catch (err) {
-        console.warn('Push to backend failed:', err.message);
+      const pendingDeletes = await db.getAllAsync(`SELECT * FROM pending_deletes`);
+
+      await syncResidents(localResidents, pendingDeletes);
+      pushOk = true;
+
+      // ✅ clear pending deletes only after a successful push
+      if (pendingDeletes.length > 0) {
+        await db.runAsync(`DELETE FROM pending_deletes`);
       }
 
       // 2️⃣ Pull backend residents to local DB
@@ -95,10 +103,19 @@ export default function SearchScreen({ navigation }) {
         }
       }
 
+      pullOk = true;
+
       Alert.alert('Synchronisation', '✅ Synchronisation réussie !');
     } catch (err) {
       console.error('Sync failed:', err.message);
-      Alert.alert('Erreur', '❌ Échec de la synchronisation, réessayez plus tard');
+
+      if (!pushOk && pullOk) {
+        Alert.alert('Synchronisation', '⚠️ Données récupérées, mais envoi impossible. Réessayez plus tard.');
+      } else if (pushOk && !pullOk) {
+        Alert.alert('Synchronisation', '⚠️ Données envoyées, mais récupération impossible. Réessayez plus tard.');
+      } else {
+        Alert.alert('Erreur', '❌ Échec de la synchronisation, réessayez plus tard');
+      }
     } finally {
       setSyncing(false);
     }
@@ -129,11 +146,19 @@ export default function SearchScreen({ navigation }) {
 
         <Button title="Rechercher" onPress={search} color={PRIMARY} />
         <View style={{ marginTop: 10 }}>
-          <Button title={syncing ? "Synchronisation..." : "Synchroniser"} onPress={handleSync} color={PRIMARY} />
+          <Button
+            title={syncing ? 'Synchronisation...' : 'Synchroniser'}
+            onPress={handleSync}
+            color={PRIMARY}
+          />
         </View>
       </View>
 
-      {noResult && <Text style={{ color: 'red', textAlign: 'center', marginBottom: 15 }}>Aucun résultat trouvé</Text>}
+      {noResult && (
+        <Text style={{ color: 'red', textAlign: 'center', marginBottom: 15 }}>
+          Aucun résultat trouvé
+        </Text>
+      )}
 
       {results.map((r, i) => {
         const plateParts = splitPlateForDisplay(r.carPlate);

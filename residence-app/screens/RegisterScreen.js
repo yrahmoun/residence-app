@@ -9,7 +9,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import Input from '../components/Input';
 import Button from '../components/Button';
 import CarPlateInput from '../components/CarPlateInput';
-import { getDB } from '../database/db';
+import { getDB, markResidentSyncedByKeys } from '../database/db';
 import { syncResidents } from '../api';
 
 const BG_COLOR = '#f5f7fa';
@@ -54,8 +54,8 @@ export default function RegisterScreen() {
       // 1️⃣ Save locally
       await db.runAsync(
         `INSERT INTO residents
-          (fullName, phonePrimary, phoneSecondary, carPlate, section, building, door, numeroDeMacaron)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          (fullName, phonePrimary, phoneSecondary, carPlate, section, building, door, numeroDeMacaron, needsSync)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)`,
         [fullName, phonePrimary, phoneSecondary, carPlate, section, building, door, numeroDeMacaron]
       );
 
@@ -87,6 +87,9 @@ export default function RegisterScreen() {
           door,
           numeroDeMacaron
         }]);
+
+        // If backend reachable, mark this resident as synced locally
+        await markResidentSyncedByKeys({ carPlate, numeroDeMacaron });
       } catch {
         setSyncError('Échec de la synchronisation, réessayez plus tard');
       }

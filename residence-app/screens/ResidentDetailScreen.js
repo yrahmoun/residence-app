@@ -66,6 +66,22 @@ export default function ResidentDetailScreen({ route, navigation }) {
           style: 'destructive',
           onPress: async () => {
             const db = await getDB();
+
+            // ✅ queue deletion for backend sync (normalized + avoid nulls)
+            try {
+              const carPlate = (resident?.carPlate || '').trim().toLowerCase();
+              const numeroDeMacaron = (resident?.numeroDeMacaron || '').trim().toLowerCase();
+
+              if (carPlate || numeroDeMacaron) {
+                await db.runAsync(
+                  `INSERT OR IGNORE INTO pending_deletes (carPlate, numeroDeMacaron) VALUES (?, ?)`,
+                  [carPlate || null, numeroDeMacaron || null]
+                );
+              }
+            } catch (e) {
+              console.warn('Could not queue deletion for sync:', e.message);
+            }
+
             await db.runAsync(`DELETE FROM residents WHERE id = ?`, [residentId]);
             navigation.goBack();
           }
@@ -75,37 +91,39 @@ export default function ResidentDetailScreen({ route, navigation }) {
   };
 
   const handleSave = async () => {
-  const carPlateStr = form.carPlate.map(p => p.trim()).join('-');
+    const carPlateStr = form.carPlate.map(p => p.trim()).join('-');
 
-  try {
-    const db = await getDB();
-    await db.runAsync(
-      `UPDATE residents 
+    try {
+      const db = await getDB();
+      await db.runAsync(
+        `UPDATE residents 
        SET fullName = ?, phonePrimary = ?, phoneSecondary = ?, carPlate = ?, 
-           section = ?, building = ?, door = ?, numeroDeMacaron = ? 
+           section = ?, building = ?, door = ?, numeroDeMacaron = ?, needsSync = 1 
        WHERE id = ?`,
-      [
-        form.fullName.trim(),
-        form.phonePrimary.trim(),
-        form.phoneSecondary.trim(),
-        carPlateStr.toLowerCase(),
-        form.section.trim(),
-        form.building.trim(),
-        form.door.trim(),
-        form.numeroDeMacaron.trim(),
-        residentId
-      ]
-    );
+        [
+          form.fullName.trim(),
+          form.phonePrimary.trim(),
+          form.phoneSecondary.trim(),
+          carPlateStr.toLowerCase(),
+          form.section.trim(),
+          form.building.trim(),
+          form.door.trim(),
+          form.numeroDeMacaron.trim(),
+          residentId
+        ]
+      );
 
       Alert.alert('Succès', 'Le résident a été mis à jour');
       setEditable(false);
       setResident({ ...form, carPlate: carPlateStr });
     } catch (err) {
       console.error(err);
-      Alert.alert('Erreur', "Impossible de mettre à jour le résident. Vérifiez que la plaque ou le numéro de macaron n'existe pas déjà.");
+      Alert.alert(
+        'Erreur',
+        "Impossible de mettre à jour le résident. Vérifiez que la plaque ou le numéro de macaron n'existe pas déjà."
+      );
     }
   };
-
 
   if (!resident) {
     return (
