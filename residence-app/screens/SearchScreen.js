@@ -20,7 +20,7 @@ const splitPlateForDisplay = (plate) => {
 };
 
 export default function SearchScreen({ navigation }) {
-  const [type, setType] = useState('fullName');
+  const [type, setType] = useState('numeroDeMacaron'); // default
   const [value, setValue] = useState('');
   const [carPlateParts, setCarPlateParts] = useState(['', '', '']);
   const [numeroDeMacaron, setNumeroDeMacaron] = useState('');
@@ -44,8 +44,14 @@ export default function SearchScreen({ navigation }) {
       query = `SELECT * FROM residents WHERE carPlate LIKE ?`;
       params = [`%${plate}%`];
     } else if (type === 'numeroDeMacaron') {
-      query = `SELECT * FROM residents WHERE numeroDeMacaron = ?`;
-      params = [numeroDeMacaron.trim()];
+      // ✅ if empty, show all residents (same behavior as name/phone empty)
+      if (!numeroDeMacaron.trim()) {
+        query = `SELECT * FROM residents`;
+        params = [];
+      } else {
+        query = `SELECT * FROM residents WHERE numeroDeMacaron = ?`;
+        params = [numeroDeMacaron.trim()];
+      }
     }
 
     const rows = await db.getAllAsync(query, params);
@@ -130,10 +136,10 @@ export default function SearchScreen({ navigation }) {
           selectedValue={['fullName', 'phonePrimary', 'carPlate', 'numeroDeMacaron'].includes(type) ? type : 'fullName'}
           onValueChange={setType}
         >
+          <Picker.Item label="Numéro de macaron" value="numeroDeMacaron" />
           <Picker.Item label="Nom complet" value="fullName" />
           <Picker.Item label="Téléphone" value="phonePrimary" />
           <Picker.Item label="Matricule" value="carPlate" />
-          <Picker.Item label="Numéro de macaron" value="numeroDeMacaron" />
         </Picker>
 
         {type === 'carPlate' ? (
